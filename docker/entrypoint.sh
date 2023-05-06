@@ -136,10 +136,8 @@ fi
     
 while true
 do
-  # log "Runnig Healthcheck"
+  log "Runnig Healthcheck"
   # /healthcheck.sh
 
-  zerotier-cli listnetworks -j | jq -er '.[] | .assignedAddresses'
-
-  sleep 1
+  sleep 10
 done
