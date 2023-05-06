@@ -121,16 +121,18 @@ if [ "x$ZEROTIER_JOIN_NETWORKS" != "x" ]; then
   log_params "Checking IP(s) for networks from environment:" $ZEROTIER_JOIN_NETWORKS
   ids=(`echo $ZEROTIER_JOIN_NETWORKS | tr ',' ' '`)
   for i in "${ids[@]}"; do
-      log_detail_params "Chec98king IP(s):" "$i"
-      result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
-      echo $result
-      while [ "$result" = "[]" ]; do
-        log_detail "Network $i without address, waiting for IP(s)"
-        sleep 1
+      # (
+        log_detail_params "Checking IP(s):" "$i"
         result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
         echo $result
-      done
-      log_params "Network $i has adresses:" "$(zerotier-cli listnetworks -j | jq -r '.[] | select(.id == "$i") | .assignedAddresses | join(", ")')"
+        while [ "$result" = "[]" ]; do
+          log "Network $i without address, waiting for IP(s)"
+          sleep 1
+          result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
+          echo $result
+        done
+        log_params "Network $i has adresses:" "$(zerotier-cli listnetworks -j | jq -r '.[] | select(.id == "$i") | .assignedAddresses | join(", ")')"
+      # )&
   done
 fi
     
