@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -70,19 +70,15 @@ trap killzerotier INT TERM
 log "Configuring networks to join"
 mkdir -p /var/lib/zerotier-one/networks.d
 
-log_params "Joining networks from command line:" $@
-for i in "$@"
-do
-  log_detail_params "Configuring join:" "$i"
-  touch "/var/lib/zerotier-one/networks.d/${i}.conf"
-done
-
-if [ "x$ZEROTIER_JOIN_NETWORKS" != "x" ]
-then
+if [ "x$ZEROTIER_JOIN_NETWORKS" != "x" ]; then
   log_params "Joining networks from environment:" $ZEROTIER_JOIN_NETWORKS
-  for i in "$ZEROTIER_JOIN_NETWORKS"
-  do
+  ids=(`echo $ZEROTIER_JOIN_NETWORKS | tr ',' ' '`)
+  for i in "${ids[@]}"; do
     log_detail_params "Configuring join:" "$i"
+    if [ "$i" = "8056c2e21c000001" ]; then
+      log "WARNING! You are connecting to ZeroTier's Earth network!"
+      log "If you join this or any other public network, make sure your computer is up to date on all security patches and you've stopped, locally firewalled, or password protected all services on your system that listen for outside connections."
+    fi
     touch "/var/lib/zerotier-one/networks.d/${i}.conf"
   done
 fi
@@ -90,8 +86,7 @@ fi
 log "Starting ZeroTier"
 nohup /usr/sbin/zerotier-one &
 
-while ! grepzt
-do
+while ! grepzt; do
   log_detail "ZeroTier hasn't started, waiting a second"
 
   if [ -f nohup.out ]
@@ -102,11 +97,17 @@ do
   sleep 1
 done
 
-log_params "Writing healthcheck for networks:" $@
+while [ $(zerotier-cli status -j | jq '.online') != "true" ]; do
+  log_detail "ZeroTier still offline, waiting a second"
+
+  sleep 1
+done
+
+log_params "Writing healthcheck for networks:" $ZEROTIER_JOIN_NETWORKS
 
 cat >/healthcheck.sh <<EOF
 #!/bin/bash
-for i in $@
+for i in $ZEROTIER_JOIN_NETWORKS
 do
   [ "\$(zerotier-cli get \$i status)" = "OK" ] || exit 1
 done
@@ -114,10 +115,31 @@ EOF
 
 chmod +x /healthcheck.sh
 
-log_params "zerotier-cli info:" "$(zerotier-cli info)"
+log_params "Member info:" "$(zerotier-cli info)"
 
-log "Sleeping infinitely"
+if [ "x$ZEROTIER_JOIN_NETWORKS" != "x" ]; then
+  log_params "Checking IP(s) for networks from environment:" $ZEROTIER_JOIN_NETWORKS
+  ids=(`echo $ZEROTIER_JOIN_NETWORKS | tr ',' ' '`)
+  for i in "${ids[@]}"; do
+      log_detail_params "Chec98king IP(s):" "$i"
+      result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
+      echo $result
+      while [ "$result" = "[]" ]; do
+        log_detail "Network $i without address, waiting for IP(s)"
+        sleep 1
+        result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
+        echo $result
+      done
+      log_params "Network $i has adresses:" "$(zerotier-cli listnetworks -j | jq -r '.[] | select(.id == "$i") | .assignedAddresses | join(", ")')"
+  done
+fi
+    
 while true
 do
+  # log "Runnig Healthcheck"
+  # /healthcheck.sh
+
+  zerotier-cli listnetworks -j | jq -er '.[] | .assignedAddresses'
+
   sleep 1
 done
