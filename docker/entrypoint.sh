@@ -38,11 +38,11 @@ killzerotier() {
 }
 
 log_header() {
-  echo -n "\r=>"
+  echo -n "=>"
 }
 
 log_detail_header() {
-  echo -n "\r===>"
+  echo -n "===>"
 }
 
 log() {
