@@ -107,9 +107,9 @@ log_params "Writing healthcheck for networks:" $ZEROTIER_JOIN_NETWORKS
 
 cat >/healthcheck.sh <<EOF
 #!/bin/bash
-for i in $ZEROTIER_JOIN_NETWORKS
-do
-  [ "\$(zerotier-cli get \$i status)" = "OK" ] || exit 1
+ids=(`echo $ZEROTIER_JOIN_NETWORKS | tr ',' ' '`)
+for i in "${ids[@]}"; do
+  [ "\$(zerotier-cli get \$i status)" = "OK" ] || echo "\$i status not OK" && exit 1
 done
 EOF
 
