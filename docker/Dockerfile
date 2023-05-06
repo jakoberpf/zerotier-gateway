@@ -1,21 +1,16 @@
 ARG NGINX_VERSION=1.21.4
-ARG ZT_VERSION=1.6.4
 
-FROM nginx:${NGINX_VERSION}
+FROM zerotier/zerotier:1.10.6
+
 LABEL maintainer="contact@jakoberpf.de"
 
-RUN apt-get update && apt-get install -y jq curl npm && apt-get clean
-
-RUN curl -o zerotier-install.sh https://raw.githubusercontent.com/jakoberpf/zerotier-scripts/main/zerotier-installer.sh && chmod +x zerotier-install.sh && /zerotier-install.sh
-
-RUN npm i -g @laduke/zerotier-central-cli
-
-RUN rc-update add iptables; \ 
-    echo "tun" >> /etc/modules
+RUN apt-get update \
+    && apt-get install -y nginx jq curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && echo "daemon off;" >> /etc/nginx/nginx.conf
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY passthrough.conf /etc/nginx/passthrough.conf
 
-ADD init-zerotier.sh /docker-entrypoint.d/40-init-zerotier.sh
-
-RUN chmod 755 /docker-entrypoint.d/40-init-zerotier.sh
+ADD entrypoint.sh /entrypoint.sh
