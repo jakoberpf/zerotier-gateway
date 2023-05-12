@@ -23,6 +23,7 @@ services:
       - gateway_data:/var/lib/zerotier-one
 
   client-one:
+    build: .
     image: jakoberpf/zerotier-client:1.10.6
     restart: unless-stopped
     ports:
@@ -37,8 +38,10 @@ services:
       - zero-ui
     volumes:
       - client-one_data:/var/lib/zerotier-one
+      - ./default-one.html:/var/www/html/index.html
 
   client-two:
+    build: .
     image: jakoberpf/zerotier-client:1.10.6
     restart: unless-stopped
     ports:
@@ -53,6 +56,7 @@ services:
       - zero-ui
     volumes:
       - client-two_data:/var/lib/zerotier-one
+      - ./default-two.html:/var/www/html/index.html
 
   zerotier:
     image: dec0dos/zerotier-controller:latest
