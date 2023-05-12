@@ -1,5 +1,7 @@
-# Kubernetes Zerotier Bridge
+# Kubernetes Zerotier Gateway
 
+- https://pracucci.com/graceful-shutdown-of-kubernetes-pods.html
+- 
 ### *TL;DR*
 
 A Zerotier gateway to access an kubernetes ingress though a ZT subnet. Indendet to be used for a distributet routing from a public gateway to a private kubernetes cluster. Currently only supports traefik as ingress and a single zerotier subnet.
