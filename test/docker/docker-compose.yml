@@ -1,0 +1,90 @@
+
+version: "3"
+name: zerotier-gateway
+services:
+
+  zerotier-gateway:
+    build: ../../docker
+    image: jakoberpf/zerotier-gateway
+    # environment:
+    #   ZEROTIER_JOIN_NETWORKS: A....B,C.......D,E.......F
+    #   ZEROTIER_JOIN_ADDRESSES: 1.......2,3.......4,5.......6
+    ports:
+      - 8080:80
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices: 
+      - /dev/net/tun
+    depends_on:
+      - zerotier
+      - zero-ui
+    volumes:
+      - gateway_data:/var/lib/zerotier-one
+
+  client-one:
+    image: jakoberpf/zerotier-client:1.10.6
+    restart: unless-stopped
+    ports:
+      - 8081:80
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices: 
+      - /dev/net/tun
+    depends_on:
+      - zerotier
+      - zero-ui
+    volumes:
+      - client-one_data:/var/lib/zerotier-one
+
+  client-two:
+    image: jakoberpf/zerotier-client:1.10.6
+    restart: unless-stopped
+    ports:
+      - 8082:80
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices: 
+      - /dev/net/tun
+    depends_on:
+      - zerotier
+      - zero-ui
+    volumes:
+      - client-two_data:/var/lib/zerotier-one
+
+  zerotier:
+    image: dec0dos/zerotier-controller:latest
+    container_name: zu-controller
+    restart: unless-stopped
+    volumes:
+      - controller_data:/var/lib/zerotier-one
+    expose:
+      - "9993/tcp"
+
+  zero-ui:
+    image: dec0dos/zero-ui:latest
+    container_name: zu-main
+    restart: unless-stopped
+    depends_on:
+      - zerotier
+    volumes:
+      - controller_data:/var/lib/zerotier-one
+      - zero-ui_data:/app/backend/data
+    environment:
+      - ZU_CONTROLLER_ENDPOINT=http://zerotier:9993/
+      - ZU_SECURE_HEADERS=true
+      - ZU_DEFAULT_USERNAME=admin
+      - ZU_DEFAULT_PASSWORD=zero-ui
+    expose:
+      - "4000"
+    ports:
+      - "4000:4000"
+
+volumes:
+  gateway_data:
+  client-one_data:
+  client-two_data:
+  controller_data:
+  zero-ui_data:
