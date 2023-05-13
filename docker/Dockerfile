@@ -10,7 +10,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY passthrough.conf /etc/nginx/passthrough.conf
 COPY default.html /var/www/html/index.html
 
 EXPOSE 80
