@@ -18,14 +18,14 @@ jobs:
           submodules: recursive
 
       - name: Build images
-        working-directory: ./test
+        working-directory: ./test/docker
         run: |
           docker compose -f docker-compose.yaml build
 
-      - name: Run docker tests
-        working-directory: ./test/docker
-        run: |
-          ./helpers/bats/bin/bats install.bats
+      # - name: Run docker tests
+      #   working-directory: ./test/docker
+      #   run: |
+      #     ./helpers/bats/bin/bats install.bats
 
   test-kubernetes:
     name: Run tests in kubernetes
@@ -38,19 +38,24 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install KinD Kubernetes
+        uses: helm/kind-action@v1.4.0
+        with:
+          install_only: true
+
       - name: Build images
-        working-directory: ./test
+        working-directory: ./test/docker
         run: |
           docker compose -f docker-compose.yaml build
 
-      - name: Run docker tests
+      - name: Run kubernetes tests
         working-directory: ./test/docker
         run: |
           ./helpers/bats/bin/bats install.bats
 
   docker:
-    name: Build and push image
-    needs: test
+    name: Build and push docker image
+    needs: test-docker
     runs-on: ubuntu-latest
 
     steps:
@@ -90,3 +95,11 @@ jobs:
           tags: |
             jakoberpf/zerotier-gateway:latest
           labels: ${{ steps.meta.outputs.labels }}
+
+  helm:
+    name: Build and push helm chart
+    needs: test-kubernetes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
