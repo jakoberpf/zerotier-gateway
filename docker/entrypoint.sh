@@ -123,23 +123,22 @@ if [ "x$ZEROTIER_JOIN_NETWORKS" != "x" ]; then
   for i in "${ids[@]}"; do
       # (
         log_detail_params "Checking IP(s):" "$i"
-        result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
-        echo $result
-        while [ "$result" = "[]" ]; do
+        while [ "$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')" = "[]" ]; do
           log "Network $i without address, waiting for IP(s)"
           sleep 1
-          result=$(zerotier-cli listnetworks -j | jq -er '.[] | select(.id == "f82d90b853d7dc1a") | .assignedAddresses')
-          echo $result
         done
-        log_params "Network $i has adresses:" "$(zerotier-cli listnetworks -j | jq -r '.[] | select(.id == "$i") | .assignedAddresses | join(", ")')"
       # )&
   done
 fi
     
+log_params "Has addresses:" "$(zerotier-cli listnetworks -j | jq -r '.[] | .assignedAddresses | join(", ")')"
+
+log "Starting NGINX"
+nginx
+
 while true
 do
-  log "Runnig Healthcheck"
+  log "Healthcheck"
   # /healthcheck.sh
-
   sleep 10
 done
