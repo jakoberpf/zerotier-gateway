@@ -21,6 +21,8 @@ services:
       - zero-ui
     volumes:
       - gateway_data:/var/lib/zerotier-one
+      - ./proxy-one.conf:/etc/nginx/sites-enabled/proxy-one.conf
+      - ./proxy-two.conf:/etc/nginx/sites-enabled/proxy-two.conf
 
   client-one:
     build: .
