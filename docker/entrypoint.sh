@@ -138,7 +138,6 @@ nginx
 
 while true
 do
-  log "Healthcheck"
   # /healthcheck.sh
-  sleep 10
+  sleep 1
 done
