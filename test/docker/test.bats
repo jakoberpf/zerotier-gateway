@@ -26,40 +26,29 @@ setup() {
 }
 
 setup_file() {
+    # Build all docker images
     docker compose build
+    # Start docker compose
     docker compose --file docker-compose.yaml up -d
-
     # Wait for Zerotier Controller to be ready
     while ! curl --silent --fail http://localhost:4000; do
         echo >&2 'Site down, retrying in 1s...'
         sleep 1
     done
-
+    # Get Zerotier Controller API token
     TMP_ZEROTIER_TOKEN=$(zt_get_token)
-
+    # Check if Zerotier Network is available, if not create new Network
     if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
-        echo "No networks created, creating new one"
+        echo "No networks available, creating new one"
         zt_create_network $TMP_ZEROTIER_TOKEN
         # zt_get_networks $TMP_ZEROTIER_TOKEN
     else
         echo "There is already a network created"
     fi
-
     # TODO join gateway and client to the network
-
-    # Wait for Zerotier Gateway to be ready
-    while ! curl --silent --fail http://localhost:8080; do
-        echo >&2 'Site down, retrying in 1s...'
-        sleep 1
-    done
-
-    while ! curl --silent --fail http://localhost:8081; do
-        echo >&2 'Site down, retrying in 1s...'
-        sleep 1
-    done
-
-    while ! curl --silent --fail http://localhost:8082; do
-        echo >&2 'Site down, retrying in 1s...'
+    # Wait for Zerotier Gateway and Services to be ready
+    while ! curl --silent --fail http://localhost:8080 || ! curl --silent --fail http://localhost:8081 || ! curl --silent --fail http://localhost:8082; do
+        echo >&2 'Gateway or Service down, retrying in 1s...'
         sleep 1
     done
 }
@@ -79,6 +68,6 @@ setup_file() {
     assert_output --partial '<title>Welcome to Service Two</title>'
 }
 
-# teardown_file() {
-#     docker compose --file docker-compose.yaml down
-# }
+teardown_file() {
+    docker compose --file docker-compose.yaml down
+}
