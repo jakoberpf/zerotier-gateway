@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 
-TMP_ZEROTIER_API="http://localhost:4000/api"
-TMP_ZEROTIER_TOKEN=""
-TMP_ZEROTIER_NETWORK=""
-TMP_ZEROTIER_MEMBER=""
+ZEROTIER_TEST_API="http://localhost/api"
+ZEROTIER_TEST_API_HOST="zerotier.example.com"
 
 zt_get_token() {
-    docker exec -u root zu-main cat /app/backend/data/db.json | jq '.users[0].token' | tr '"' ' ' | xargs
+    uiPodName=$(kubectl get pods -n zerotier -o json | jq '.items[] | select(.metadata.labels.component=="ui") | .metadata.name' | xargs)
+    kubectl exec $uiPodName -n zerotier -- cat /app/backend/data/db.json |  jq '.users[0].token' | tr '"' ' ' | xargs
 }
 
 zt_get_networks() {
-    curl -s -X GET -H "Authorization: token $1" $TMP_ZEROTIER_API/network
+    curl -s -X GET -H "Authorization: token $1" --header "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
 }
 
 zt_create_network() {
-    curl -s -X POST -H "Authorization: token $1" -d '{}' $TMP_ZEROTIER_API/network
+    curl -s -X POST -H "Authorization: token $1" -d '{}' --header "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
 }
 
 setup() {
@@ -40,21 +39,22 @@ setup_file() {
     helm install zerotier-controller oci://ghcr.io/jakoberpf/charts/zerotier-controller --version 0.0.8 --values zerotier-controller-values.yaml -n zerotier
     kubectl create secret generic zerotier-admin-credentials --from-literal=username=admin --from-literal=password=admin -n zerotier
     # Wait for Zerotier Controller to be ready
-    while ! curl --header 'Host: zerotier.example.com' http://localhost:80; do
+    while ! curl --header 'Host: zerotier.example.com' http://localhost/app/; do
         echo >&2 'Zerotier Controller down, retrying in 1s...'
         sleep 1
     done
-    # TMP_ZEROTIER_TOKEN=$(zt_get_token)
-
-    # if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
-    #     echo "No networks created, creating new one"
-    #     zt_create_network $TMP_ZEROTIER_TOKEN
-    #     # zt_get_networks $TMP_ZEROTIER_TOKEN
-    # else
-    #     echo "There is already a network created"
-    # fi
-
+    # Get Zerotier Controller API token
+    TMP_ZEROTIER_TOKEN=$(zt_get_token)
+    # Check if Zerotier Network is available, if not create new Network
+    if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
+        echo "No networks available, creating new one"
+        zt_create_network $TMP_ZEROTIER_TOKEN
+        # zt_get_networks $TMP_ZEROTIER_TOKEN
+    else
+        echo "There is already a network created"
+    fi
     # TODO join gateway and client to the network
+    # Wait for Zerotier Gateway and Services to be ready
 }
 
 @test "should be able to curl gateway" {
