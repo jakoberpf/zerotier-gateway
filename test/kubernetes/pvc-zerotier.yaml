@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zerotier-one-data
+  namespace: zerotier
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # The amount of the volume's storage to request
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zerotier-ui-data
+  namespace: zerotier
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # The amount of the volume's storage to request
+      storage: 1Gi
