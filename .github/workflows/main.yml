@@ -25,7 +25,7 @@ jobs:
       # - name: Run docker tests
       #   working-directory: ./test/docker
       #   run: |
-      #     ./helpers/bats/bin/bats install.bats
+      #     ../helpers/bats/bin/bats test.bats
 
   test-kubernetes:
     name: Run tests in kubernetes
@@ -43,15 +43,10 @@ jobs:
         with:
           install_only: true
 
-      - name: Build images
-        working-directory: ./test/docker
-        run: |
-          docker compose -f docker-compose.yaml build
-
-      - name: Run kubernetes tests
-        working-directory: ./test/docker
-        run: |
-          ./helpers/bats/bin/bats install.bats
+      # - name: Run kubernetes tests
+      #   working-directory: ./test/kubernetes
+      #   run: |
+      #     ../helpers/bats/bin/bats test.bats
 
   docker:
     name: Build and push docker image
@@ -74,12 +69,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
-        id: meta-scripts
-        uses: docker/metadata-action@v4
-        with:
-          images: jakoberpf/zerotier-gateway
-
-      - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
         with:
@@ -98,7 +87,7 @@ jobs:
 
   helm:
     name: Build and push helm chart
-    needs: test-kubernetes
+    needs: [test-docker, test-kubernetes]
     runs-on: ubuntu-latest
 
     steps:
