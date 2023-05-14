@@ -4,7 +4,7 @@ name: zerotier-gateway
 services:
 
   zerotier-gateway:
-    build: ../../docker
+    build: ../..
     image: jakoberpf/zerotier-gateway
     # environment:
     #   ZEROTIER_JOIN_NETWORKS: A....B,C.......D,E.......F
