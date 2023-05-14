@@ -10,7 +10,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      # The amount of the volume's storage to request
       storage: 1Gi
 
 ---
@@ -25,5 +24,4 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      # The amount of the volume's storage to request
       storage: 1Gi
