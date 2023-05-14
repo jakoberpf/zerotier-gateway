@@ -35,9 +35,15 @@ setup_file() {
         echo >&2 'Istio down, retrying in 1s...'
         sleep 1
     done
-    # Add 
+    # Deploy Zerotier Controller
     kubectl create namespace zerotier
-    helm install zerotier-controller oci://ghcr.io/jakoberpf/charts/zerotier-controller --version 0.0.8 -n zerotier
+    helm install zerotier-controller oci://ghcr.io/jakoberpf/charts/zerotier-controller --version 0.0.8 --values zerotier-controller-values.yaml -n zerotier
+    kubectl create secret generic zerotier-admin-credentials --from-literal=username=admin --from-literal=password=admin -n zerotier
+    # Wait for Zerotier Controller to be ready
+    while ! curl --header 'Host: zerotier.example.com' http://localhost:80; do
+        echo >&2 'Zerotier Controller down, retrying in 1s...'
+        sleep 1
+    done
     # TMP_ZEROTIER_TOKEN=$(zt_get_token)
 
     # if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
