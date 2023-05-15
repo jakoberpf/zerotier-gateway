@@ -53,27 +53,30 @@ setup_file() {
     # Get Zerotier controller API token
     TMP_ZEROTIER_TOKEN=$(zt_get_token)
     # Check if Zerotier network is available, if not create new network
-    # if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
-    #     echo "No networks available, creating new one"
-    #     zt_create_network $TMP_ZEROTIER_TOKEN
-    #     # zt_get_networks $TMP_ZEROTIER_TOKEN
-    # else
-    #     echo "There is already a network created"
-    # fi
+    if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
+        echo "No networks available, creating new one"
+        zt_create_network $TMP_ZEROTIER_TOKEN
+        # zt_get_networks $TMP_ZEROTIER_TOKEN
+    else
+        echo "There is already a network created"
+    fi
     # Deploy Zerotier gateway chart
-    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-controller-pvc.yaml
+    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-controller-pvc.yaml -n $ZEROTIER_TEST_NAMESPACE
     helm upgrade --install zerotier-gateway $GIT_ROOT/chart --values=$GIT_ROOT/test/kubernetes/zerotier-gateway-values.yaml -n $ZEROTIER_TEST_NAMESPACE
     # Wait for Zerotier gateway to be ready
     while ! curl -I --silent --fail --header 'Host: example.com' http://localhost; do
         echo >&2 'Zerotier Gateway down, retrying in 1s...'
         sleep 1
     done
-    # Create index.html as configmaps and deploy test clients
+    # Create index.html as configmaps
     kubectl create configmap zerotier-client-one-html --from-file=$GIT_ROOT/test/docker/default-one.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
     kubectl create configmap zerotier-client-two-html --from-file=$GIT_ROOT/test/docker/default-two.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-
+    # build Zerotier gateway client image and load into cluster
+    docker build -t jakoberpf/zerotier-gateway-client:local $GIT_ROOT/test/docker
+    kind load docker-image jakoberpf/zerotier-gateway-client:local --name zerotier-gateway
+    #  and deploy test clients
+    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-gateway-clients.yaml -n $ZEROTIER_TEST_NAMESPACE
     # TODO join gateway and client to the network
-    
     # Wait for Zerotier Gateway and Services to be ready
 }
 
@@ -92,6 +95,6 @@ setup_file() {
 #     assert_output --partial '<title>Welcome to Service Two</title>'
 # }
 
-# teardown_file() {
-#     kind delete cluster
-# }
+teardown_file() {
+    kind delete cluster --name zerotier-gateway
+}
