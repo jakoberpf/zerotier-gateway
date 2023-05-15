@@ -47,6 +47,12 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - mountPath: /var/lib/zerotier-one
+            name: zerotier-one-data
+          - name: tun
+            readOnly: true
+            mountPath: /dev/net/tun
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -59,3 +65,11 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      - name: zerotier-one-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.pvc.name }}
+      - name: tun
+        hostPath:
+          path: /dev/net/tun
+          type: ''
