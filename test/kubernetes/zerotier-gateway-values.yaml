@@ -1,0 +1,10 @@
+persistence:
+  enabled: true
+  pvc:
+    create: true
+ingress:
+  enabled: true
+  hosts:
+    - host: example.com
+  istioGateway:
+    enabled: true

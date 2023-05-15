@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: zerotier-gateway-client-one
+  name: zerotier-gateway-client-one
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zerotier-gateway-client-one
+  template:
+    metadata:
+      labels:
+        app: zerotier-gateway-client-one
+    spec:
+      containers:
+      - image: jakoberpf/zerotier-gateway-client:local
+        name: zerotier-gateway-client
+        volumeMounts:
+        - name: html
+          mountPath: /var/www/html/index.html
+  volumes:
+    - name: html
+      configMap:
+        name: zerotier-client-one-html
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: zerotier-gateway-client-two
+  name: zerotier-gateway-client-two
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zerotier-gateway-client-two
+  template:
+    metadata:
+      labels:
+        app: zerotier-gateway-client-two
+    spec:
+      containers:
+      - image: jakoberpf/zerotier-gateway-client:local
+        name: zerotier-gateway-client
+        volumeMounts:
+        - name: html
+          mountPath: /var/www/html/index.html
+  volumes:
+    - name: html
+      configMap:
+        name: zerotier-client-two-html
