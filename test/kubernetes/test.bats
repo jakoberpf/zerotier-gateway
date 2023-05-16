@@ -44,7 +44,7 @@ setup_file() {
     kubectl create namespace $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
     # Deploy Zerotier controller
     kubectl create secret generic zerotier-admin-credentials --from-literal=username=admin --from-literal=password=admin -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-    helm upgrade --install zerotier-controller oci://ghcr.io/jakoberpf/charts/zerotier-controller --version 0.0.8 --values $GIT_ROOT/test/kubernetes/zerotier-controller-values.yaml -n $ZEROTIER_TEST_NAMESPACE
+    helm upgrade --install zerotier-controller /Users/jakoberpf/Code/jakoberpf/kubernetes/charts/charts/zerotier-controller --values $GIT_ROOT/test/kubernetes/zerotier-controller-values.yaml -n $ZEROTIER_TEST_NAMESPACE
     # Wait for Zerotier controller to be ready
     while ! curl -I --silent --fail --header 'Host: zerotier.example.com' http://localhost/app/; do
         echo >&2 'Zerotier Controller down, retrying in 1s...'
