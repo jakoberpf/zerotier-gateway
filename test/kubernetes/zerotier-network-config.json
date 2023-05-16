@@ -1,0 +1,29 @@
+{
+    "config": {
+        "name": "zerotier-gateway",
+        "private": true,
+        "v6AssignMode": {
+            "rfc4193": false,
+            "6plane": false,
+            "zt": false
+        },
+        "v4AssignMode": {
+            "zt": true
+        },
+        "routes": [
+            {
+                "target": "172.30.25.0/24",
+                "via": null,
+                "flags": 0,
+                "metric": 0
+            }
+        ],
+        "ipAssignmentPools": [
+            {
+                "ipRangeStart": "172.30.25.1",
+                "ipRangeEnd": "172.30.25.254"
+            }
+        ],
+        "enableBroadcast": true
+    }
+}

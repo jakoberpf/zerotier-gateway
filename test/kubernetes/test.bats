@@ -13,11 +13,17 @@ zt_get_token() {
 }
 
 zt_get_networks() {
-    curl -s -X GET -H "Authorization: token $1" --header "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
+    curl -s -X GET -H "Authorization: token $1" -H "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
 }
 
 zt_create_network() {
-    curl -s -X POST -H "Authorization: token $1" -d '{}' --header "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
+    curl -s -X POST -H "Authorization: token $1" -H "Content-Type: application/json" -d @$GIT_ROOT/test/kubernetes/zerotier-network-config.json -H "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network
+}
+
+zt_join_pod() {
+    kubectl exec $2 -n $ZEROTIER_TEST_NAMESPACE -- zerotier-cli join $3
+    zerotierMemberId=$(kubectl exec $1 -n $ZEROTIER_TEST_NAMESPACE -- zerotier-cli info | cut -d' ' -f3)
+    curl -s -X POST -H "Authorization: token $1" -H "Content-Type: application/json" -d "{ \"config\":{ \"ip\": true, \"ipAssignments\":{ \"$4\" } } }" -H "Host: $ZEROTIER_TEST_API_HOST" $ZEROTIER_TEST_API/network/$3/member/$zerotierMemberId
 }
 
 setup() {
@@ -51,15 +57,13 @@ setup_file() {
         sleep 1
     done
     # Get Zerotier controller API token
-    TMP_ZEROTIER_TOKEN=$(zt_get_token)
+    TMP_ZEROTIER_TOKEN="$(zt_get_token)"
     # Check if Zerotier network is available, if not create new network
-    if [ "$(zt_get_networks $TMP_ZEROTIER_TOKEN | xargs)"="[]" ]; then
-        echo "No networks available, creating new one"
+    if [ ! "$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)" != "" ]; then
+        echo "No networks created, creating new one"
         zt_create_network $TMP_ZEROTIER_TOKEN
-        # zt_get_networks $TMP_ZEROTIER_TOKEN
-    else
-        echo "There is already a network created"
     fi
+    TMP_ZEROTIER_NETWORK_ID="$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)"
     # Deploy Zerotier gateway chart
     kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-controller-pvc.yaml -n $ZEROTIER_TEST_NAMESPACE
     helm upgrade --install zerotier-gateway $GIT_ROOT/chart --values=$GIT_ROOT/test/kubernetes/zerotier-gateway-values.yaml -n $ZEROTIER_TEST_NAMESPACE
@@ -74,10 +78,15 @@ setup_file() {
     # build Zerotier gateway client image and load into cluster
     docker build -t jakoberpf/zerotier-gateway-client:local $GIT_ROOT/test/docker
     kind load docker-image jakoberpf/zerotier-gateway-client:local --name zerotier-gateway
-    #  and deploy test clients
+    # Deploy test clients
     kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-gateway-clients.yaml -n $ZEROTIER_TEST_NAMESPACE
-    # TODO join gateway and client to the network
-    # Wait for Zerotier Gateway and Services to be ready
+    # Join gateway and client to the Zerotier network
+    gatewayPodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.component=="gateway") | .metadata.name' | xargs)
+    clientOnePodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-one") | .metadata.name' | xargs)
+    clientTwoPodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-two") | .metadata.name' | xargs)
+    zt_join_pod $TMP_ZEROTIER_TOKEN $gatewayPodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.2"
+    zt_join_pod $TMP_ZEROTIER_TOKEN $clientOnePodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.5"
+    zt_join_pod $TMP_ZEROTIER_TOKEN $clientOnePodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.6"
 }
 
 @test "should be able to curl gateway" {
@@ -85,16 +94,16 @@ setup_file() {
     assert_output --partial '<title>Welcome to the Example Gateway</title>'
 }
 
-# @test "should be able to curl service-one via the gateway" {
-#     run bash -c "curl -s --header 'Host: one.example.com' http://localhost | grep title"
-#     assert_output --partial '<title>Welcome to Service One</title>'
-# }
-
-# @test "should be able to curl service-two via the gateway" {
-#     run bash -c "curl -s --header 'Host: two.example.com' http://localhost | grep title"
-#     assert_output --partial '<title>Welcome to Service Two</title>'
-# }
-
-teardown_file() {
-    kind delete cluster --name zerotier-gateway
+@test "should be able to curl service-one via the gateway" {
+    run bash -c "curl -s --header 'Host: one.example.com' http://localhost | grep title"
+    assert_output --partial '<title>Welcome to Service One</title>'
 }
+
+@test "should be able to curl service-two via the gateway" {
+    run bash -c "curl -s --header 'Host: two.example.com' http://localhost | grep title"
+    assert_output --partial '<title>Welcome to Service Two</title>'
+}
+
+# teardown_file() {
+#     kind delete cluster --name zerotier-gateway
+# }
