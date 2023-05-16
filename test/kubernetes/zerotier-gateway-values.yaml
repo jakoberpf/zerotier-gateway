@@ -6,5 +6,7 @@ ingress:
   enabled: true
   hosts:
     - host: example.com
+    - host: one.example.com
+    - host: two.example.com
   istioGateway:
     enabled: true
