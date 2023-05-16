@@ -18,13 +18,26 @@ spec:
       containers:
       - image: jakoberpf/zerotier-gateway-client:local
         name: zerotier-gateway-client
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+              - SYS_ADMIN
         volumeMounts:
         - name: html
           mountPath: /var/www/html/index.html
+        - name: tun
+          readOnly: true
+          mountPath: /dev/net/tun
       volumes:
         - name: html
           configMap:
             name: zerotier-client-one-html
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: ''
 
 ---
 apiVersion: apps/v1
@@ -46,10 +59,23 @@ spec:
       containers:
       - image: jakoberpf/zerotier-gateway-client:local
         name: zerotier-gateway-client
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+              - SYS_ADMIN
         volumeMounts:
         - name: html
           mountPath: /var/www/html/index.html
+        - name: tun
+          readOnly: true
+          mountPath: /dev/net/tun
       volumes:
         - name: html
           configMap:
             name: zerotier-client-two-html
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: ''
