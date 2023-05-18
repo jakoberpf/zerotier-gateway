@@ -51,7 +51,7 @@ jobs:
 
       - uses: zufardhiyaulhaq/setup-istioctl@v1.0.0
         with:
-          version: latest
+          version: 1.17.2
 
       - name: Run kubernetes tests
         working-directory: ./test/kubernetes
