@@ -49,10 +49,10 @@ jobs:
         with:
           install_only: true
 
-      # - name: Run kubernetes tests
-      #   working-directory: ./test/kubernetes
-      #   run: |
-      #     ../helpers/bats/bin/bats test.bats
+      - name: Run kubernetes tests
+        working-directory: ./test/kubernetes
+        run: |
+          ../helpers/bats/bin/bats test.bats --print-output-on-failure
 
   docker:
     name: Build and push docker image
