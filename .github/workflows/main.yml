@@ -25,10 +25,10 @@ jobs:
         run: |
           docker compose -f docker-compose.yaml build
 
-      # - name: Run docker tests
-      #   working-directory: ./test/docker
-      #   run: |
-      #     ../helpers/bats/bin/bats test.bats
+      - name: Run docker tests
+        working-directory: ./test/docker
+        run: |
+          ../helpers/bats/bin/bats test.bats --print-output-on-failure
 
   test-kubernetes:
     name: Run tests in kubernetes
