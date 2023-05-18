@@ -17,6 +17,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
+
       - name: Build images
         working-directory: ./test/docker
         run: |
@@ -37,6 +40,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
 
       - name: Install KinD Kubernetes
         uses: helm/kind-action@v1.4.0
