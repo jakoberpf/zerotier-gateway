@@ -61,15 +61,20 @@ setup_file() {
     # Check if Zerotier network is available, if not create new network
     if [ ! "$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)" != "" ]; then
         echo "No networks created, creating new one"
+        ((c++)) && ((c==10)) && exit 0
         zt_create_network $TMP_ZEROTIER_TOKEN
     fi
     TMP_ZEROTIER_NETWORK_ID="$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)"
     # Deploy Zerotier gateway chart
     kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-controller-pvc.yaml -n $ZEROTIER_TEST_NAMESPACE
+    docker build -t jakoberpf/zerotier-gateway:local $GIT_ROOT
+    kind load docker-image jakoberpf/zerotier-gateway:local --name zerotier-gateway
     helm upgrade --install zerotier-gateway $GIT_ROOT/chart --values=$GIT_ROOT/test/kubernetes/zerotier-gateway-values.yaml -n $ZEROTIER_TEST_NAMESPACE
     # Wait for Zerotier gateway to be ready
+    counter=0
     while ! curl -I --silent --fail --header 'Host: example.com' http://localhost; do
         echo >&2 'Zerotier Gateway down, retrying in 1s...'
+        ((c++)) && ((c==10)) && exit 0
         sleep 1
     done
     # Create index.html as configmaps
