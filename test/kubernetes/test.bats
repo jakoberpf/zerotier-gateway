@@ -49,8 +49,9 @@ setup_file() {
     # Create testing namespaces
     kubectl create namespace $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
     # Deploy Zerotier controller
-    kubectl create secret generic zerotier-admin-credentials --from-literal=username=admin --from-literal=password=admin -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-    helm upgrade --install zerotier-controller /Users/jakoberpf/Code/jakoberpf/kubernetes/charts/charts/zerotier-controller --values $GIT_ROOT/test/kubernetes/zerotier-controller-values.yaml -n $ZEROTIER_TEST_NAMESPACE
+    helm repo add jakoberpf https://jakoberpf.github.io/charts/
+    helm repo update
+    helm upgrade --install zerotier-controller jakoberpf/zerotier-controller --values $GIT_ROOT/test/kubernetes/zerotier-controller-values.yaml -n $ZEROTIER_TEST_NAMESPACE
     # Wait for Zerotier controller to be ready
     while ! curl -I --silent --fail --header 'Host: zerotier.example.com' http://localhost/app/; do
         echo >&2 'Zerotier Controller down, retrying in 1s...'
@@ -66,7 +67,6 @@ setup_file() {
     fi
     TMP_ZEROTIER_NETWORK_ID="$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)"
     # Deploy Zerotier gateway chart
-    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-controller-pvc.yaml -n $ZEROTIER_TEST_NAMESPACE
     docker build -t jakoberpf/zerotier-gateway:local $GIT_ROOT
     kind load docker-image jakoberpf/zerotier-gateway:local --name zerotier-gateway
     helm upgrade --install zerotier-gateway $GIT_ROOT/chart --values=$GIT_ROOT/test/kubernetes/zerotier-gateway-values.yaml -n $ZEROTIER_TEST_NAMESPACE
