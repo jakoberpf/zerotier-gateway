@@ -24,12 +24,18 @@ spec:
               - NET_ADMIN
               - NET_RAW
               - SYS_ADMIN
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
         volumeMounts:
         - name: html
           mountPath: /var/www/html/index.html
         - name: tun
           readOnly: true
           mountPath: /dev/net/tun
+        resources: {}
       volumes:
         - name: html
           configMap:
@@ -38,6 +44,23 @@ spec:
           hostPath:
             path: /dev/net/tun
             type: ''
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: client-one
+  name: client-one
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: zerotier-gateway-client-one
+  type: ClusterIP
 
 ---
 apiVersion: apps/v1
@@ -65,12 +88,18 @@ spec:
               - NET_ADMIN
               - NET_RAW
               - SYS_ADMIN
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
         volumeMounts:
         - name: html
           mountPath: /var/www/html/index.html
         - name: tun
           readOnly: true
           mountPath: /dev/net/tun
+        resources: {}
       volumes:
         - name: html
           configMap:
@@ -79,3 +108,20 @@ spec:
           hostPath:
             path: /dev/net/tun
             type: ''
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: client-two
+  name: client-two
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: zerotier-gateway-client-two
+  type: ClusterIP
