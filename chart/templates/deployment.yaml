@@ -19,6 +19,7 @@ spec:
       {{- end }}
       labels:
         {{- include "zerotier-gateway.selectorLabels" . | nindent 8 }}
+        component: gateway
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -37,17 +38,19 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+          - mountPath: /etc/nginx/sites-enabled
+            name: zerotier-gateway-servers
           - mountPath: /var/lib/zerotier-one
             name: zerotier-one-data
           - name: tun
@@ -66,6 +69,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+      - name: zerotier-gateway-servers
+        configMap:
+          name: {{ .Values.nginx.sites.configMapName }}
       - name: zerotier-one-data
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.pvc.name }}
