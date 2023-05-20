@@ -1,8 +1,13 @@
 # Kubernetes Zerotier Gateway
 
-- https://pracucci.com/graceful-shutdown-of-kubernetes-pods.html
-- 
-### *TL;DR*
+- <https://pracucci.com/graceful-shutdown-of-kubernetes-pods.html>
+- <https://serverfault.com/questions/422331/how-to-use-nginx-as-reverse-proxy-with-multiple-ips-and-ssl>
+- <https://serverfault.com/questions/578648/properly-setting-up-a-default-nginx-server-for-https>
+- <https://serverfault.com/questions/616113/nginx-does-not-serve-static-files-over-https>
+- <https://www.cyberciti.biz/faq/configure-nginx-ssltls-passthru-with-tcp-load-balancing/>
+- <https://github.com/neumanndaniel/kubernetes/blob/master/istio-tls-passthrough/istio-gateway-tls-passthrough.yaml>
+
+## *TL;DR*
 
 A Zerotier gateway to access an kubernetes ingress though a ZT subnet. Indendet to be used for a distributet routing from a public gateway to a private kubernetes cluster. Currently only supports traefik as ingress and a single zerotier subnet.
 
