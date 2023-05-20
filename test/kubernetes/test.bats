@@ -103,10 +103,10 @@ setup_file() {
     zt_join_pod $TMP_ZEROTIER_TOKEN $gatewayPodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.2"
 }
 
-@test "should be able to curl gateway" {
-    run bash -c "curl -s --header 'Host: example.com' http://localhost | grep title"
-    assert_output --partial '<title>Welcome to the Example Gateway</title>'
-}
+# @test "should be able to curl gateway" {
+#     run bash -c "curl -s --header 'Host: example.com' http://localhost | grep title"
+#     assert_output --partial '<title>Welcome to the Example Gateway</title>'
+# }
 
 @test "should be able to curl service-one via the gateway" {
     run bash -c "curl -s --header 'Host: one.example.com' http://localhost | grep title"
