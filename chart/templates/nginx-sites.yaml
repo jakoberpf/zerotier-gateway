@@ -1,0 +1,20 @@
+{{- if .Values.nginx.sites.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.nginx.sites.configMapName }}
+data:
+  {{- range $k, $v := .Values.nginx.sites.servers }}
+  {{ $k }}.conf: |
+    server {
+      listen 80;
+      server_name {{ $v.listen.host }};
+      location / {
+        proxy_pass       http://{{ $v.destination.host }}:{{ $v.destination.port }};
+        proxy_set_header Host            $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        add_header       X-Upstream      $upstream_addr;
+      }
+    }
+  {{- end }}
+{{- end }}

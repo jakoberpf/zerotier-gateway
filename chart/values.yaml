@@ -11,6 +11,7 @@ nginx:
   sites:
     create: true
     configMapName: zerotier-gateway-nginx-sites
+    servers: {}
 
 image:
   repository: jakoberpf/zerotier-gateway

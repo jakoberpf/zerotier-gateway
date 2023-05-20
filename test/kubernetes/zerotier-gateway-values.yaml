@@ -1,3 +1,18 @@
+nginx:
+  sites:
+    servers:
+      client-one: 
+        listen:
+          host: one.example.com
+        destination:
+          host: client-one
+          port: 80
+      client-two: 
+        listen:
+          host: two.example.com
+        destination:
+          host: client-two
+          port: 80
 image:
   tag: local
 persistence:
