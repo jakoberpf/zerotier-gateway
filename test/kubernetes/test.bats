@@ -66,6 +66,27 @@ setup_file() {
         zt_create_network $TMP_ZEROTIER_TOKEN
     fi
     TMP_ZEROTIER_NETWORK_ID="$(zt_get_networks $TMP_ZEROTIER_TOKEN | jq '.[].id' | xargs)"
+    # Create index.html as configmaps
+    kubectl create configmap zerotier-client-one-html --from-file=$GIT_ROOT/test/docker/client-one/index.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+    kubectl create configmap zerotier-client-two-html --from-file=$GIT_ROOT/test/docker/client-two/index.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+    # build Zerotier gateway client image and load into cluster
+    docker build -t jakoberpf/zerotier-gateway-client:local $GIT_ROOT/test/docker
+    kind load docker-image jakoberpf/zerotier-gateway-client:local --name zerotier-gateway
+    # Deploy test clients
+    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-gateway-clients.yaml -n $ZEROTIER_TEST_NAMESPACE
+    # Wait for Zerotier clients to be ready
+    sleep 10
+    # counter=0
+    # while ! curl -I --silent --fail --header 'Host: example.com' http://localhost; do
+    #     echo >&2 'Zerotier Gateway down, retrying in 1s...'
+    #     ((c++)) && ((c==60)) && exit 0
+    #     sleep 1
+    # done
+    # Join clients to the Zerotier network
+    clientOnePodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-one") | .metadata.name' | xargs)
+    clientTwoPodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-two") | .metadata.name' | xargs)
+    zt_join_pod $TMP_ZEROTIER_TOKEN $clientOnePodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.5"
+    zt_join_pod $TMP_ZEROTIER_TOKEN $clientTwoPodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.6"
     # Deploy Zerotier gateway chart
     docker build -t jakoberpf/zerotier-gateway:local $GIT_ROOT
     kind load docker-image jakoberpf/zerotier-gateway:local --name zerotier-gateway
@@ -77,21 +98,9 @@ setup_file() {
         ((c++)) && ((c==60)) && exit 0
         sleep 1
     done
-    # Create index.html as configmaps
-    kubectl create configmap zerotier-client-one-html --from-file=$GIT_ROOT/test/docker/default-one.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-    kubectl create configmap zerotier-client-two-html --from-file=$GIT_ROOT/test/docker/default-two.html -n $ZEROTIER_TEST_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-    # build Zerotier gateway client image and load into cluster
-    docker build -t jakoberpf/zerotier-gateway-client:local $GIT_ROOT/test/docker
-    kind load docker-image jakoberpf/zerotier-gateway-client:local --name zerotier-gateway
-    # Deploy test clients
-    kubectl apply -f $GIT_ROOT/test/kubernetes/zerotier-gateway-clients.yaml -n $ZEROTIER_TEST_NAMESPACE
-    # Join gateway and client to the Zerotier network
+    # Join gateway to the Zerotier network
     gatewayPodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.component=="gateway") | .metadata.name' | xargs)
-    clientOnePodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-one") | .metadata.name' | xargs)
-    clientTwoPodName=$(kubectl get pods -n $ZEROTIER_TEST_NAMESPACE -o json | jq '.items[] | select(.metadata.labels.app=="zerotier-gateway-client-two") | .metadata.name' | xargs)
     zt_join_pod $TMP_ZEROTIER_TOKEN $gatewayPodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.2"
-    zt_join_pod $TMP_ZEROTIER_TOKEN $clientOnePodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.5"
-    zt_join_pod $TMP_ZEROTIER_TOKEN $clientOnePodName $TMP_ZEROTIER_NETWORK_ID "172.30.25.6"
 }
 
 @test "should be able to curl gateway" {
