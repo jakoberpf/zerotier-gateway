@@ -1,15 +1,100 @@
 name: Release Charts
 
-on:
+on: 
   push:
-    branches:
-      - main
-    paths:
-      - 'charts/**'
+    tags:
+      - "*.*.*"
 
 jobs:
+  test-docker:
+    name: Run tests in docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build images
+        working-directory: ./test/docker
+        run: |
+          docker compose -f docker-compose.yaml build
+
+      - name: Run docker tests
+        working-directory: ./test/docker
+        run: |
+          ../helpers/bats/bin/bats test.bats --print-output-on-failure
+
+  test-kubernetes:
+    name: Run tests in kubernetes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install KinD Kubernetes
+        uses: helm/kind-action@v1.4.0
+        with:
+          install_only: true
+
+      - uses: zufardhiyaulhaq/setup-istioctl@v1.0.0
+        with:
+          version: 1.17.2
+
+      - name: Run kubernetes tests
+        working-directory: ./test/kubernetes
+        run: |
+          ../helpers/bats/bin/bats test.bats --print-output-on-failure
+
+  docker:
+    name: Release container image
+    needs: [test-docker, test-kubernetes]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: jakoberpf/zerotier-gateway
+
+      - name: Build image and push to Docker Hub tagged with latest
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      
   release-chart:
-    name: Release chart to github pages and container registry
+    name: Release helm chart
+    needs: [test-docker, test-kubernetes]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
