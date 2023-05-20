@@ -21,8 +21,8 @@ services:
       - zero-ui
     volumes:
       - gateway_data:/var/lib/zerotier-one
-      - ./proxy-one.conf:/etc/nginx/sites-enabled/proxy-one.conf
-      - ./proxy-two.conf:/etc/nginx/sites-enabled/proxy-two.conf
+      - ./gateway-sites/client-one.conf:/etc/nginx/sites-enabled/client-one.conf
+      - ./gateway-sites/client-two.conf:/etc/nginx/sites-enabled/client-two.conf
 
   client-one:
     build: .
@@ -40,7 +40,7 @@ services:
       - zero-ui
     volumes:
       - client-one_data:/var/lib/zerotier-one
-      - ./default-one.html:/var/www/html/index.html
+      - ./client-one/index.html:/var/www/html/index.html
 
   client-two:
     build: .
@@ -58,7 +58,7 @@ services:
       - zero-ui
     volumes:
       - client-two_data:/var/lib/zerotier-one
-      - ./default-two.html:/var/www/html/index.html
+      - ./client-two/index.html:/var/www/html/index.html
 
   zerotier:
     image: dec0dos/zerotier-controller:latest
