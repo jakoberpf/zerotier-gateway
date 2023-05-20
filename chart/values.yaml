@@ -4,6 +4,14 @@
 
 replicaCount: 1
 
+nginx:
+  # config:
+  #   create: true
+  #   configMapName: zerotier-gateway-nginx-config
+  sites:
+    create: true
+    configMapName: zerotier-gateway-nginx-sites
+
 image:
   repository: jakoberpf/zerotier-gateway
   pullPolicy: IfNotPresent
