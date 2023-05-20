@@ -94,11 +94,3 @@ jobs:
           tags: |
             jakoberpf/zerotier-gateway:latest
           labels: ${{ steps.meta.outputs.labels }}
-
-  helm:
-    name: Build and push helm chart
-    needs: [test-docker, test-kubernetes]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
