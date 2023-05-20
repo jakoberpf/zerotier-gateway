@@ -118,6 +118,6 @@ setup_file() {
     assert_output --partial '<title>Welcome to Service Two</title>'
 }
 
-# teardown_file() {
-#     kind delete cluster --name zerotier-gateway
-# }
+teardown_file() {
+    kind delete cluster --name zerotier-gateway
+}
