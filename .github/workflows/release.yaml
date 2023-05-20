@@ -116,7 +116,7 @@ jobs:
       - name: Release chart to Github Pages
         uses: helm/chart-releaser-action@v1.5.0
         with:
-          charts_dir: charts
+          charts_dir: .
         env:
           CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
           CR_SKIP_EXISTING: true
