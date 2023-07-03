@@ -12,7 +12,7 @@ nginx:
     create: true
     configMapName: zerotier-gateway-nginx-sites
     servers: {}
-      # example: 
+      # example:
       #   listen:
       #     host: example.example.com
       #   destination:
@@ -87,7 +87,7 @@ ingress:
     annotations: {}
   certManager:
     enabled: false
-    # issuerRef: 
+    # issuerRef:
     #   name: cloudflare-letsencrypt-prod
     #   kind: ClusterIssuer
     annotations: {}
