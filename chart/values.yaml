@@ -12,6 +12,17 @@ nginx:
     create: true
     configMapName: zerotier-gateway-nginx-sites
     servers: {}
+      # example: 
+      #   listen:
+      #     host: example.example.com
+      #   destination:
+      #     protocol: https
+      #     host: 123.456.789.123
+      #     port: 443
+      #   parameters: |
+      #     proxy_set_header Host            $host;
+      #     proxy_set_header X-Forwarded-For $remote_addr;
+      #     add_header       X-Upstream      $upstream_addr;
 
 image:
   repository: jakoberpf/zerotier-gateway
