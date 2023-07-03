@@ -6,14 +6,16 @@ metadata:
 data:
   {{- range $k, $v := .Values.nginx.sites.servers }}
   {{ $k }}.conf: |
+    upstream {{ $k }} {
+      ip_hash;
+      server {{ $v.destination.host }}:{{ $v.destination.port }};
+    }
     server {
       listen 80;
       server_name {{ $v.listen.host }};
       location / {
-        proxy_pass       http://{{ $v.destination.host }}:{{ $v.destination.port }};
-        proxy_set_header Host            $host;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        add_header       X-Upstream      $upstream_addr;
+        proxy_pass       {{ $v.destination.protocol }}://{{ $k }};
+        {{ toYaml $v.parameters | indent 6 | trim | trimPrefix "|" }}
       }
     }
   {{- end }}
