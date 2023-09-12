@@ -17,7 +17,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build images
         working-directory: ./test/docker
@@ -40,7 +40,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Install KinD Kubernetes
         uses: helm/kind-action@v1.7.0
@@ -68,7 +68,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Setup Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -106,7 +106,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Setup docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to container registry
         run: |
