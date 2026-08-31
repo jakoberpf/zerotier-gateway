@@ -8,7 +8,7 @@
 		"ghcr.io/devcontainers-contrib/features/kind:1": {
 			"version": "latest"
 		},
-		"ghcr.io/eitsupi/devcontainer-features/jq-likes:1": {
+		"ghcr.io/eitsupi/devcontainer-features/jq-likes:2": {
 			"jqVersion": "os-provided",
 			"yqVersion": "latest",
 			"gojqVersion": "latest"
